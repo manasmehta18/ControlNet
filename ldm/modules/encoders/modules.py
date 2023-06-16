@@ -4,6 +4,8 @@ from torch.utils.checkpoint import checkpoint
 
 from transformers import T5Tokenizer, T5EncoderModel, CLIPTokenizer, CLIPTextModel
 
+from ldm.modules.x_transformer import Encoder, TransformerWrapper, TransformerWrapperWithPrompt 
+
 import open_clip
 from ldm.util import default, count_params
 
@@ -211,3 +213,35 @@ class FrozenCLIPT5Encoder(AbstractEncoder):
         return [clip_z, t5_z]
 
 
+class T5EmbedderWithPrompt(AbstractEncoder):
+    """Uses the T5 transformer encoder for text"""
+    def __init__(self, n_embed, n_layer, version="google/t5-v1_1-large", device="cuda", max_length=77, freeze=True, vocab_size=30522, embedding_dropout=0.0):  # others are google/t5-v1_1-xl and google/t5-v1_1-xxl
+        super().__init__()
+        self.tokenizer = T5Tokenizer.from_pretrained(version)
+        # self.transformer = T5EncoderModel.from_pretrained(version)
+        self.transformer = TransformerWrapperWithPrompt(num_tokens=vocab_size, max_seq_len=max_length,
+                                              attn_layers=Encoder(dim=n_embed, depth=n_layer),
+                                              emb_dropout=embedding_dropout)
+
+        self.device = device
+        self.max_length = max_length   # TODO: typical value?
+        if freeze:
+            self.freeze()
+
+    def freeze(self):
+        self.transformer = self.transformer.eval()
+        #self.train = disabled_train
+        for param in self.parameters():
+            param.requires_grad = False
+
+    def forward(self, text):
+        batch_encoding = self.tokenizer(text, truncation=True, max_length=self.max_length, return_length=True,
+                                        return_overflowing_tokens=False, padding="max_length", return_tensors="pt")
+        tokens = batch_encoding["input_ids"].to(self.device)
+        outputs = self.transformer(input_ids=tokens)
+
+        z = outputs.last_hidden_state
+        return z
+
+    def encode(self, text):
+        return self(text)
