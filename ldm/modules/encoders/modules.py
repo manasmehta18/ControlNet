@@ -4,7 +4,7 @@ from torch.utils.checkpoint import checkpoint
 
 from transformers import T5Tokenizer, T5EncoderModel, CLIPTokenizer, CLIPTextModel
 
-from ldm.modules.x_transformer import Encoder, TransformerWrapper, TransformerWrapperWithPrompt 
+from ldm.modules.x_transformer import Encoder, TransformerWrapper, TransformerWrapperWithPrompt, CLIPTextModelWithPrompt 
 
 import open_clip
 from ldm.util import default, count_params
@@ -254,15 +254,15 @@ class CLIPEmbedderWithPrompt(AbstractEncoder):
         "pooled",
         "hidden"
     ]
-    def __init__(self, n_embed, n_layer, version="openai/clip-vit-large-patch14", device="cuda", max_length=77,
-                 freeze=True, layer="last", layer_idx=None, vocab_size=30522, embedding_dropout=0.0):  # clip-vit-base-patch32
+    def __init__(self, version="openai/clip-vit-large-patch14", device="cuda", max_length=77,
+                 freeze=True, layer="last", layer_idx=None):  # clip-vit-base-patch32
         super().__init__()
         assert layer in self.LAYERS
         self.tokenizer = CLIPTokenizer.from_pretrained(version)
-        # self.transformer = CLIPTextModel.from_pretrained(version)
-        self.transformer = TransformerWrapperWithPrompt(num_tokens=vocab_size, max_seq_len=max_length,
-                                              attn_layers=Encoder(dim=n_embed, depth=n_layer),
-                                              emb_dropout=embedding_dropout)
+        self.transformer = CLIPTextModelWithPrompt.from_pretrained(version)
+        # self.transformer = TransformerWrapperWithPrompt(num_tokens=vocab_size, max_seq_len=max_length,
+        #                                       attn_layers=Encoder(dim=n_embed, depth=n_layer),
+        #                                       emb_dropout=embedding_dropout)
         
         self.device = device
         self.max_length = max_length

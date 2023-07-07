@@ -7,6 +7,7 @@ from cldm.logger import ImageLogger
 from cldm.model import create_model, load_state_dict
 
 
+
 # Configs
 resume_path = 'models/control_sd15_hed.pth'
 batch_size = 4
@@ -18,7 +19,7 @@ only_mid_control = False
 
 # First use cpu to load models. Pytorch Lightning will automatically move it to GPUs.
 model = create_model('models/cldm_v15_prompt.yaml').cpu()
-model.load_state_dict(load_state_dict(resume_path, location='cpu'))
+m, u = model.load_state_dict(load_state_dict(resume_path, location='cpu'))
 model.learning_rate = learning_rate
 model.sd_locked = sd_locked
 model.only_mid_control = only_mid_control

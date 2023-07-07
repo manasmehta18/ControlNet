@@ -3,6 +3,7 @@ import torch
 
 from omegaconf import OmegaConf
 from ldm.util import instantiate_from_config
+from torch import nn
 
 
 def get_state_dict(d):
@@ -17,7 +18,14 @@ def load_state_dict(ckpt_path, location='cpu'):
     else:
         state_dict = get_state_dict(torch.load(ckpt_path, map_location=torch.device(location)))
     state_dict = get_state_dict(state_dict)
+    
     print(f'Loaded state_dict from [{ckpt_path}]')
+
+    state_dict['cond_stage_model.transformer.text_model.prompt_token'] = nn.Parameter(torch.randn(8, 768))
+
+    for k, v in state_dict.items():
+        print(k)
+
     return state_dict
 
 
