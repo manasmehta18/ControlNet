@@ -17,8 +17,12 @@ from cldm.ddim_hacked import DDIMSampler
 
 apply_hed = HEDdetector()
 
-model = create_model('./models/cldm_v15.yaml').cpu()
-model.load_state_dict(load_state_dict('./models/control_sd15_hed.pth', location='cuda'))
+# constable, lionel, lee, va, watts, boudin, cox
+
+artist = "cox"
+
+model = create_model('./models/cldm_v15_prompt.yaml').cpu()
+model.load_state_dict(load_state_dict('./lightning_logs/' + artist + '/checkpoints/last.ckpt', location='cuda'))
 model = model.cuda()
 ddim_sampler = DDIMSampler(model)
 
@@ -64,6 +68,10 @@ def process(input_image, prompt, a_prompt, n_prompt, num_samples, image_resoluti
         x_samples = (einops.rearrange(x_samples, 'b c h w -> b h w c') * 127.5 + 127.5).cpu().numpy().clip(0, 255).astype(np.uint8)
 
         results = [x_samples[i] for i in range(num_samples)]
+
+        token = model.cond_stage_model.transformer.text_model.prompt_token
+        np.save(f"tokens/style_token", token.cpu())
+
     return [detected_map] + results
 
 
@@ -95,4 +103,4 @@ with block:
     run_button.click(fn=process, inputs=ips, outputs=[result_gallery])
 
 
-block.launch(server_name='0.0.0.0')
+block.launch(server_name='localhost')

@@ -853,8 +853,6 @@ class CLIPTextTransformerWithPrompt(nn.Module):
 
         hidden_states = self.embeddings(input_ids=input_ids, position_ids=position_ids)
 
-        print(hidden_states.shape)
-
         b, n, _ = hidden_states.shape
         device, num_prompt = hidden_states.device, self.num_prompt_tokens
 

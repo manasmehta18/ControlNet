@@ -8,7 +8,7 @@ from annotator.util import resize_image, HWC3
 
 # constable, lionel, lee, va, watts, boudin, cox
 
-artist = "constable"
+artist = "cox"
 
 class MyDataset(Dataset):
     def __init__(self):
@@ -37,8 +37,10 @@ class MyDataset(Dataset):
         source = cv2.resize(source, (512, 512))
 
         # Do not forget that OpenCV read images in BGR order.
-        source = cv2.cvtColor(source, cv2.COLOR_BGR2RGB)
-        target = cv2.cvtColor(target, cv2.COLOR_BGR2RGB)
+        source = cv2.cvtColor(source, cv2.COLOR_BGR2GRAY)
+        source = np.stack((source,)*3, axis=-1)
+        target = cv2.cvtColor(target, cv2.COLOR_BGR2GRAY)
+        target = np.stack((target,)*3, axis=-1)
 
         # Normalize source images to [0, 1].
         source = source.astype(np.float32) / 255.0
