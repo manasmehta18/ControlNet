@@ -19,7 +19,7 @@ apply_hed = HEDdetector()
 
 # constable, lionel, lee, va, watts, boudin, cox
 
-artist = "cox"
+artist = "lionel"
 
 model = create_model('./models/cldm_v15_prompt.yaml').cpu()
 model.load_state_dict(load_state_dict('./lightning_logs/' + artist + '/checkpoints/last.ckpt', location='cuda'))

@@ -314,6 +314,10 @@ class ControlLDM(LatentDiffusion):
         self.only_mid_control = only_mid_control
         self.control_scales = [1.0] * 13
 
+        #custom
+        self.num_prompt_tokens = 8
+        self.prompt_token = nn.Parameter(torch.randn(self.num_prompt_tokens, control_stage_config['params']['context_dim']))
+
     @torch.no_grad()
     def get_input(self, batch, k, bs=None, *args, **kwargs):
         x, c = super().get_input(batch, self.first_stage_key, *args, **kwargs)
@@ -326,10 +330,15 @@ class ControlLDM(LatentDiffusion):
         return x, dict(c_crossattn=[c], c_concat=[control])
 
     def apply_model(self, x_noisy, t, cond, *args, **kwargs):
+        # cond = {'c_concat': cond}
         assert isinstance(cond, dict)
         diffusion_model = self.model.diffusion_model
 
         cond_txt = torch.cat(cond['c_crossattn'], 1)
+
+        if self.num_prompt_tokens > 0:
+            prompt = repeat(self.prompt_token*1.0, 'n d -> b n d', b=cond_txt.shape[0])
+            cond_txt = torch.cat((cond_txt, prompt), dim=1) # add the prompt token
 
         if cond['c_concat'] is None:
             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=None, only_mid_control=self.only_mid_control)
@@ -351,6 +360,9 @@ class ControlLDM(LatentDiffusion):
                    use_ema_scope=True,
                    **kwargs):
         use_ddim = ddim_steps is not None
+
+        print(self.prompt_token)
+
 
         log = dict()
         z, c = self.get_input(batch, self.first_stage_key, bs=N)
@@ -413,13 +425,28 @@ class ControlLDM(LatentDiffusion):
         samples, intermediates = ddim_sampler.sample(ddim_steps, batch_size, shape, cond, verbose=False, **kwargs)
         return samples, intermediates
 
+    # def configure_optimizers(self):
+    #     lr = self.learning_rate
+    #     params = list(self.control_model.parameters())
+    #     if not self.sd_locked:
+    #         params += list(self.model.diffusion_model.output_blocks.parameters())
+    #         params += list(self.model.diffusion_model.out.parameters())
+    #     opt = torch.optim.AdamW(params, lr=lr)
+    #     return opt
+
     def configure_optimizers(self):
         lr = self.learning_rate
-        params = list(self.control_model.parameters())
-        if not self.sd_locked:
-            params += list(self.model.diffusion_model.output_blocks.parameters())
-            params += list(self.model.diffusion_model.out.parameters())
+        tok = "prompt_token"
+
+        params = []
+        for name, param in self.named_parameters():
+            if name == tok:
+                params.append(param)
+
         opt = torch.optim.AdamW(params, lr=lr)
+
+        print(params)
+
         return opt
 
     def low_vram_shift(self, is_diffusing):

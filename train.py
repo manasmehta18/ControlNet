@@ -13,7 +13,7 @@ resume_path = 'models/control_sd15_hed.pth'
 batch_size = 1
 logger_freq = 300
 learning_rate = 1e-5
-sd_locked = True
+sd_locked = False
 only_mid_control = False
 
 

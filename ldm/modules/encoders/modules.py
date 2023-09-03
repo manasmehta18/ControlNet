@@ -255,7 +255,7 @@ class CLIPEmbedderWithPrompt(AbstractEncoder):
         "hidden"
     ]
     def __init__(self, version="openai/clip-vit-large-patch14", device="cuda", max_length=77,
-                 freeze=True, layer="last", layer_idx=None):  # clip-vit-base-patch32
+                 freeze=False, layer="last", layer_idx=None):  # clip-vit-base-patch32
         super().__init__()
         assert layer in self.LAYERS
         self.tokenizer = CLIPTokenizer.from_pretrained(version)
@@ -283,6 +283,7 @@ class CLIPEmbedderWithPrompt(AbstractEncoder):
     def forward(self, text):
         batch_encoding = self.tokenizer(text, truncation=True, max_length=self.max_length, return_length=True,
                                         return_overflowing_tokens=False, padding="max_length", return_tensors="pt")
+
         tokens = batch_encoding["input_ids"].to(self.device)
         outputs = self.transformer(input_ids=tokens, output_hidden_states=self.layer=="hidden")
         if self.layer == "last":
@@ -294,4 +295,5 @@ class CLIPEmbedderWithPrompt(AbstractEncoder):
         return z
 
     def encode(self, text):
+        # print(text)
         return self(text)

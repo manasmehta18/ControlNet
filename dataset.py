@@ -8,7 +8,7 @@ from annotator.util import resize_image, HWC3
 
 # constable, lionel, lee, va, watts, boudin, cox
 
-artist = "cox"
+artist = "lionel"
 
 class MyDataset(Dataset):
     def __init__(self):
