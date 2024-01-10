@@ -8,7 +8,7 @@ from annotator.util import resize_image, HWC3
 
 # constable, lionel, lee, va, watts, boudin, cox
 
-artist = "lionel"
+artist = "all"
 
 class MyDataset(Dataset):
     def __init__(self):
@@ -26,6 +26,9 @@ class MyDataset(Dataset):
         source_filename = item['source']
         target_filename = item['target']
         prompt = item['prompt']
+
+        #joint model
+        artist = item['art']
 
         source = cv2.imread(source_filename)
         target = cv2.imread(target_filename)
@@ -48,5 +51,5 @@ class MyDataset(Dataset):
         # Normalize target images to [-1, 1].
         target = (target.astype(np.float32) / 127.5) - 1.0
 
-        return dict(jpg=target, txt=prompt, hint=source)
+        return dict(jpg=target, txt=prompt, art=artist, hint=source)
 

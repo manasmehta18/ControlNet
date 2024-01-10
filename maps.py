@@ -74,8 +74,8 @@ count = 1
 
 for img in source:
     src = cv.imread("paintings/" + painter + "/" + img)
-    # map = canny(src, 512, 100, 200)
-    map = hed(src, 512)
+    map = canny(src, 512, 100, 200)
+    # map = hed(src, 512)
     cv.imwrite(os.path.join("maps/" + painter, img.rsplit( ".", 1 )[ 0 ] + '.jpg'), map)
     count += 1
 

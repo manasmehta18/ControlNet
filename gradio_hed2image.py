@@ -19,7 +19,7 @@ apply_hed = HEDdetector()
 
 # constable, lionel, lee, va, watts, boudin, cox
 
-artist = "lionel"
+artist = "all_32"
 
 model = create_model('./models/cldm_v15_prompt.yaml').cpu()
 model.load_state_dict(load_state_dict('./lightning_logs/' + artist + '/checkpoints/last.ckpt', location='cuda'))
@@ -29,7 +29,7 @@ ddim_sampler = DDIMSampler(model)
 
 def process(input_image, prompt, a_prompt, n_prompt, num_samples, image_resolution, detect_resolution, ddim_steps, guess_mode, strength, scale, seed, eta):
     with torch.no_grad():
-        input_image = HWC3(input_image)
+        input_image = HWC3(cv2.cvtColor(input_image, cv2.COLOR_BGR2GRAY) )
         detected_map = apply_hed(resize_image(input_image, detect_resolution))
         detected_map = HWC3(detected_map)
         img = resize_image(input_image, image_resolution)
@@ -48,8 +48,8 @@ def process(input_image, prompt, a_prompt, n_prompt, num_samples, image_resoluti
         if config.save_memory:
             model.low_vram_shift(is_diffusing=False)
 
-        cond = {"c_concat": [control], "c_crossattn": [model.get_learned_conditioning([prompt + ', ' + a_prompt] * num_samples)]}
-        un_cond = {"c_concat": None if guess_mode else [control], "c_crossattn": [model.get_learned_conditioning([n_prompt] * num_samples)]}
+        cond = {"c_concat": [control], "c_crossattn": [model.get_learned_conditioning([prompt + ', ' + a_prompt] * num_samples)], "art": torch.tensor([2.0])}
+        un_cond = {"c_concat": None if guess_mode else [control], "c_crossattn": [model.get_learned_conditioning([n_prompt] * num_samples)], "art": torch.tensor([2.0])}
         shape = (4, H // 8, W // 8)
 
         if config.save_memory:
@@ -69,7 +69,7 @@ def process(input_image, prompt, a_prompt, n_prompt, num_samples, image_resoluti
 
         results = [x_samples[i] for i in range(num_samples)]
 
-        token = model.cond_stage_model.transformer.text_model.prompt_token
+        token = model.prompt_token2
         np.save(f"tokens/style_token", token.cpu())
 
     return [detected_map] + results

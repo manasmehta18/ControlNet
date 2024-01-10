@@ -2,7 +2,7 @@ import os
 
 # constable, lionel, lee, va, watts, boudin, cox
 
-painter = 'cox'
+painter = 'constable'
 
 path = "annotations/"
 
@@ -12,6 +12,6 @@ source = os.listdir("maps/" + painter)
 dest = os.listdir("paintings/" + painter)
 
 for  i, src in enumerate(source):
-    f.write('{"source": ' + '"maps/' + painter + '/' + src + '", "target": ' + '"paintings/' + painter + '/' + dest[i] + '", "prompt": ""}\n')
+    f.write('{"source": ' + '"maps/' + painter + '/' + src + '", "target": ' + '"paintings/' + painter + '/' + dest[i] + '", "prompt": "a black and white oil painting of clouds and the sky"}\n')
 
 f.close()

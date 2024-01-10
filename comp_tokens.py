@@ -4,19 +4,20 @@ from sklearn.metrics.pairwise import cosine_similarity as cos
 
 # constable, lionel, va, boudin, watts, lee, cox
 
-token1 = np.load("tokens/constable.npy")
-token2 = np.load("tokens/lionel.npy")
+token1 = np.load("tokens/new_32_constable.npy")
+token2 = np.load("tokens/new_32_constable.npy")
+
+print(token1)
+print(token2)
 
 token_mean1 = np.mean(token1, axis=0).reshape(1,-1)
 token_mean2 = np.mean(token2, axis=0).reshape(1,-1)
 
 token_sim = cos(token_mean1, token_mean2)
 
-eu = np.zeros(8)
+eu = np.zeros(32)
 
-print(token1.shape)
-
-for i in range(8):
+for i in range(32):
     eu[i] = np.sqrt(np.sum(np.square(token1[i,:] - token2[i,:])))
 
 
@@ -29,6 +30,18 @@ print(eu)
 
 ##############################################################################################################################################
 
+
+######## fixed token #########
+
+# constable - constable: 0.9999999
+# constable - va: 0.02322552
+# constable - boudin: 0.00407522
+# constable - lee: 0.0789765
+# constable - lionel: -0.03236661
+# constable - watts: -0.02573552
+# constable - cox: 0.04589404
+
+
 # constable - constable: 1.
 # constable - va: 0.02224347
 # constable - boudin: -0.05858683
@@ -36,6 +49,7 @@ print(eu)
 # constable - lionel: 0.0007894
 # constable - watts: -0.04274431
 # constable - cox: -0.01996468
+
 
 ###############################################################################################################################################
 
