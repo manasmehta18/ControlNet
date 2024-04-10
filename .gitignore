@@ -7,6 +7,8 @@ paintings/
 maps/
 annotations/
 tokens/
+maps_whole/
+paintings_whole/
 
 *.pth
 *.pt

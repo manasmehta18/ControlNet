@@ -10,7 +10,7 @@ from cldm.model import create_model, load_state_dict
 
 # Configs
 resume_path = 'models/control_sd15_hed.pth'
-batch_size = 16
+batch_size = 8
 logger_freq = 300
 learning_rate = 1e-5
 sd_locked = False
@@ -26,11 +26,11 @@ model.only_mid_control = only_mid_control
 
 
 # Misc
-dataset = MyDataset('all')
+dataset = MyDataset('bonheur')
 print(dataset)
 dataloader = DataLoader(dataset, num_workers=16, batch_size=batch_size, shuffle=True)
 logger = ImageLogger(batch_frequency=logger_freq)
-trainer = pl.Trainer(gpus=1, precision=32, callbacks=[logger], max_epochs=100)
+trainer = pl.Trainer(gpus=1, precision=32, callbacks=[logger], max_epochs=200)
 
 
 # Train!

@@ -2,7 +2,9 @@ import os
 
 # constable, lionel, lee, va, watts, boudin, cox
 
-painter = "boudin"
+# bonheur, boudin, constable, courbet, jones, manet
+
+painter = "manet"
 
 for i, filename in enumerate(os.listdir("paintings/" + painter)):
     print(filename)
