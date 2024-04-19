@@ -21,14 +21,7 @@ def load_state_dict(ckpt_path, location='cpu'):
     
     print(f'Loaded state_dict from [{ckpt_path}]')
 
-    # state_dict['cond_stage_model.transformer.text_model.prompt_token'] = nn.Parameter(torch.randn(8, 768))
-
-    state_dict['prompt_token1'] = nn.Parameter(torch.randn(8, 768))
-    # state_dict['prompt_token2'] = nn.Parameter(torch.randn(8, 768))
-    # state_dict['prompt_token3'] = nn.Parameter(torch.randn(8, 768))
-    # state_dict['prompt_token4'] = nn.Parameter(torch.randn(8, 768))
-    # state_dict['prompt_token5'] = nn.Parameter(torch.randn(8, 768))
-    # state_dict['prompt_token6'] = nn.Parameter(torch.randn(8, 768))
+    state_dict['prompt_tokens'] = nn.Parameter(torch.zeros(4, 1, 768))
 
     return state_dict
 

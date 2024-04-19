@@ -5,7 +5,7 @@ from sklearn.metrics.pairwise import cosine_similarity as cos
 # constable, lionel, va, boudin, watts, lee, cox
 
 token1 = np.load("outputs/tokens/bonheur.npy")
-token2 = np.load("outputs/tokens/boudin.npy")
+token2 = np.load("outputs/tokens/constable.npy")
 
 print(token1)
 print(token2)
@@ -15,9 +15,9 @@ token_mean2 = np.mean(token2, axis=0).reshape(1,-1)
 
 token_sim = cos(token_mean1, token_mean2)
 
-eu = np.zeros(8)
+eu = np.zeros(32)
 
-for i in range(8):
+for i in range(32):
     eu[i] = np.sqrt(np.sum(np.square(token1[i,:] - token2[i,:])))
 
 

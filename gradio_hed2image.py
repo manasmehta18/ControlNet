@@ -20,9 +20,9 @@ apply_hed = HEDdetector()
 
 # constable, lionel, lee, va, watts, boudin, cox
 
-# boudin = 1, boudin = 2, constable = 3, courbet = 4, jones = 5, manet = 6
+# bonheur = 1, boudin = 2, constable = 3, courbet = 4, jones = 5, manet = 4
 
-artist = "manet"
+artist = "all"
 
 model = create_model('./models/cldm_v15_prompt.yaml').cpu()
 model.load_state_dict(load_state_dict('./lightning_logs/' + artist + '/checkpoints/last.ckpt', location='cuda'))
@@ -56,8 +56,8 @@ def process(input_image, prompt, a_prompt, n_prompt, num_samples, image_resoluti
         if config.save_memory:
             model.low_vram_shift(is_diffusing=False)
 
-        cond = {"c_concat": [control], "c_crossattn": [model.get_learned_conditioning([prompt + ', ' + a_prompt] * num_samples)], "art": torch.tensor([6.0])}
-        un_cond = {"c_concat": None if guess_mode else [control], "c_crossattn": [model.get_learned_conditioning([n_prompt] * num_samples)], "art": torch.tensor([6.0])}
+        cond = {"c_concat": [control], "c_crossattn": [model.get_learned_conditioning([prompt + ', ' + a_prompt] * num_samples)], "art": torch.tensor([3.0])}
+        un_cond = {"c_concat": None if guess_mode else [control], "c_crossattn": [model.get_learned_conditioning([n_prompt] * num_samples)], "art": torch.tensor([3.0])}
 
         # cond = {"c_concat": [control], "c_crossattn": [model.get_learned_conditioning([prompt + ', ' + a_prompt] * num_samples)]}
         # un_cond = {"c_concat": None if guess_mode else [control], "c_crossattn": [model.get_learned_conditioning([n_prompt] * num_samples)]}
@@ -71,6 +71,14 @@ def process(input_image, prompt, a_prompt, n_prompt, num_samples, image_resoluti
                                                      shape, cond, verbose=False, eta=eta,
                                                      unconditional_guidance_scale=scale,
                                                      unconditional_conditioning=un_cond)
+        
+        # samples, intermediates = ddim_sampler.sample(ddim_steps, num_samples,
+        #                                              shape, cond, verbose=False, eta=eta,
+        #                                              unconditional_guidance_scale=scale,
+        #                                              unconditional_conditioning=un_cond, x_T=encoded_image)
+
+        #TODO: add the function for encoding image to the cldm
+        
 
         if config.save_memory:
             model.low_vram_shift(is_diffusing=False)
@@ -80,17 +88,11 @@ def process(input_image, prompt, a_prompt, n_prompt, num_samples, image_resoluti
 
         results = [x_samples[i] for i in range(num_samples)]
 
-        # token = model.prompt_token1
-        # np.save(f"outputs/tokens/style_token", token.cpu())
+        token = model.prompt_tokens[3]
+        np.save(f"outputs/tokens/style_token", token.cpu())
 
-        # cv2.imshow('color image',results[0])  
-
-        # cv2.waitKey(0)  
-
-
-
-        cv2.imwrite('outputs/new.jpg', results[0])
-        cv2.imwrite('outputs/map.jpg', detected_map)  
+        cv2.imwrite('outputs/new2.jpg', results[0])
+        # cv2.imwrite('outputs/map.jpg', detected_map)  
         print("done")
 
     return [detected_map] + results
@@ -128,20 +130,25 @@ def process(input_image, prompt, a_prompt, n_prompt, num_samples, image_resoluti
 
 
 def main():
-    bonheur = "paintings/bonheur/4.jpg"
-    bonheur = "paintings/bonheur/51.jpg"
-    # boudin = "paintings/boudin/12.jpg"
-    boudin = "paintings/boudin/65.jpg"
-    # constable = "paintings/constable/106.jpg"
-    # constable = "paintings/constable/13.jpg"
-    courbet = "paintings/courbet/69.jpg"
-    jones = "paintings/jones/31.jpg"
-    manet = "paintings/manet/58.jpg"
-    manet1 = "paintings/manet/12.jpg"
-    # manet1 = "paintings/manet/75.jpg"
 
-    input_image = cv2.imread(boudin)
-    prompt = "a 19th-century Realist oil painting of beaches, the ocean, ships, cities, sky and clouds by the artist manet"  
+    # sky
+    bonheur = "paintings/bonheur/51.jpg"
+    boudin = "paintings/boudin/65.jpg"
+    constable = "paintings/constable/106.jpg"
+    manet1 = "paintings/manet/75.jpg"
+
+    # courbet = "paintings/courbet/69.jpg"
+    # jones = "paintings/jones/31.jpg"
+    # manet = "paintings/manet/58.jpg"
+
+    # whole
+    # bonheur = "paintings/bonheur/4.jpg"
+    # boudin = "paintings/boudin/12.jpg"
+    # constable = "paintings/constable/13.jpg"
+    # manet1 = "paintings/manet/12.jpg"
+
+    input_image = cv2.imread(constable)
+    prompt = "a 19th-century Realist oil painting of clouds and the sky by the artist constable"  
     a_prompt = ""
     n_prompt = ""
     num_samples = 1

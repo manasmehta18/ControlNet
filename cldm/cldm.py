@@ -316,23 +316,20 @@ class ControlLDM(LatentDiffusion):
         self.class_key = class_key
 
         # custom
-        self.num_prompt_tokens = 8
-        self.prompt_token1 = nn.Parameter(torch.randn(self.num_prompt_tokens, control_stage_config['params']['context_dim']))
-        # self.prompt_token2 = nn.Parameter(torch.randn(self.num_prompt_tokens, control_stage_config['params']['context_dim']))
-        # self.prompt_token3 = nn.Parameter(torch.randn(self.num_prompt_tokens, control_stage_config['params']['context_dim']))
-        # self.prompt_token4 = nn.Parameter(torch.randn(self.num_prompt_tokens, control_stage_config['params']['context_dim']))
-        # self.prompt_token5 = nn.Parameter(torch.randn(self.num_prompt_tokens, control_stage_config['params']['context_dim']))
-        # self.prompt_token6 = nn.Parameter(torch.randn(self.num_prompt_tokens, control_stage_config['params']['context_dim']))
+        self.num_prompt_tokens = 1
+        self.num_artists = 4
+        self.prompt_tokens = nn.Parameter(torch.zeros(self.num_artists, self.num_prompt_tokens, control_stage_config['params']['context_dim']))
 
     @torch.no_grad()
     def get_input(self, batch, k, bs=None, *args, **kwargs):
         x, c = super().get_input(batch, self.first_stage_key, *args, **kwargs)
+
+
         control = batch[self.control_key]
         if bs is not None:
             control = control[:bs]
 
         artist = torch.as_tensor([float(i) for i in batch[self.class_key]])
-
         if bs is not None:
             artist = artist[:bs]
 
@@ -351,17 +348,16 @@ class ControlLDM(LatentDiffusion):
 
         cond_txt = torch.cat(cond['c_crossattn'], 1)
 
-        # new_tensor = torch.tensor(cond['art'], device = 'cpu')
-
-        # print(cond['art'])
-
-
-
-
-
+        # if self.num_prompt_tokens > 0:
+        #     prompt = repeat(self.prompt_token1*1.0, 'n d -> b n d', b=cond_txt.shape[0])
+        #     cond_txt = torch.cat((cond_txt, prompt), dim=1) # add the prompt token
 
         if self.num_prompt_tokens > 0:
-            prompt = repeat(self.prompt_token1*1.0, 'n d -> b n d', b=cond_txt.shape[0])
+            # prompt = self.prompt_tokens[cond['art'].cpu().numpy().astype(int)-1]*1.0
+
+            # print(self.prompt_tokens)
+
+            prompt = torch.index_select(self.prompt_tokens, 0, cond['art'].long() - 1)
             cond_txt = torch.cat((cond_txt, prompt), dim=1) # add the prompt token
 
         if cond['c_concat'] is None:
@@ -370,207 +366,6 @@ class ControlLDM(LatentDiffusion):
             control = self.control_model(x=x_noisy, hint=torch.cat(cond['c_concat'], 1), timesteps=t, context=cond_txt)
             control = [c * scale for c, scale in zip(control, self.control_scales)]
             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=control, only_mid_control=self.only_mid_control)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        # if isinstance(cond['art'], list):
-        #     if cond['art'][0].cpu().numpy()[0] == 1.0:
-        #         # print('bonheur')
-        #         # print(cond['art'][0].cpu().numpy())
-
-        #         if self.num_prompt_tokens > 0:
-        #             prompt = repeat(self.prompt_token1*1.0, 'n d -> b n d', b=cond_txt.shape[0])
-        #             cond_txt = torch.cat((cond_txt, prompt), dim=1) # add the prompt token
-
-        #         if cond['c_concat'] is None:
-        #             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=None, only_mid_control=self.only_mid_control)
-        #         else:
-        #             control = self.control_model(x=x_noisy, hint=torch.cat(cond['c_concat'], 1), timesteps=t, context=cond_txt)
-        #             control = [c * scale for c, scale in zip(control, self.control_scales)]
-        #             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=control, only_mid_control=self.only_mid_control)
-
-        #     elif cond['art'][0].cpu().numpy()[0] == 2.0:
-        #         # print('boudin')
-
-        #         if self.num_prompt_tokens > 0:
-        #             prompt = repeat(self.prompt_token2*1.0, 'n d -> b n d', b=cond_txt.shape[0])
-        #             cond_txt = torch.cat((cond_txt, prompt), dim=1) # add the prompt token
-
-        #         if cond['c_concat'] is None:
-        #             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=None, only_mid_control=self.only_mid_control)
-        #         else:
-        #             control = self.control_model(x=x_noisy, hint=torch.cat(cond['c_concat'], 1), timesteps=t, context=cond_txt)
-        #             control = [c * scale for c, scale in zip(control, self.control_scales)]
-        #             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=control, only_mid_control=self.only_mid_control)
-
-        #     elif cond['art'][0].cpu().numpy()[0] == 3.0:
-        #         # print('constable')
-
-        #         if self.num_prompt_tokens > 0:
-        #             prompt = repeat(self.prompt_token3*1.0, 'n d -> b n d', b=cond_txt.shape[0])
-        #             cond_txt = torch.cat((cond_txt, prompt), dim=1) # add the prompt token
-
-        #         if cond['c_concat'] is None:
-        #             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=None, only_mid_control=self.only_mid_control)
-        #         else:
-        #             control = self.control_model(x=x_noisy, hint=torch.cat(cond['c_concat'], 1), timesteps=t, context=cond_txt)
-        #             control = [c * scale for c, scale in zip(control, self.control_scales)]
-        #             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=control, only_mid_control=self.only_mid_control)
-
-        #     elif cond['art'][0].cpu().numpy()[0] == 4.0:
-        #         # print('courbet')
-
-        #         if self.num_prompt_tokens > 0:
-        #             prompt = repeat(self.prompt_token4*1.0, 'n d -> b n d', b=cond_txt.shape[0])
-        #             cond_txt = torch.cat((cond_txt, prompt), dim=1) # add the prompt token
-
-        #         if cond['c_concat'] is None:
-        #             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=None, only_mid_control=self.only_mid_control)
-        #         else:
-        #             control = self.control_model(x=x_noisy, hint=torch.cat(cond['c_concat'], 1), timesteps=t, context=cond_txt)
-        #             control = [c * scale for c, scale in zip(control, self.control_scales)]
-        #             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=control, only_mid_control=self.only_mid_control)
-
-        #     elif cond['art'][0].cpu().numpy()[0] == 5.0:
-        #         # print('jones')
-
-        #         if self.num_prompt_tokens > 0:
-        #             prompt = repeat(self.prompt_token5*1.0, 'n d -> b n d', b=cond_txt.shape[0])
-        #             cond_txt = torch.cat((cond_txt, prompt), dim=1) # add the prompt token
-
-        #         if cond['c_concat'] is None:
-        #             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=None, only_mid_control=self.only_mid_control)
-        #         else:
-        #             control = self.control_model(x=x_noisy, hint=torch.cat(cond['c_concat'], 1), timesteps=t, context=cond_txt)
-        #             control = [c * scale for c, scale in zip(control, self.control_scales)]
-        #             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=control, only_mid_control=self.only_mid_control)
-
-        #     elif cond['art'][0].cpu().numpy()[0] == 6.0:
-        #         # print('manet')
-
-        #         if self.num_prompt_tokens > 0:
-        #             prompt = repeat(self.prompt_token6*1.0, 'n d -> b n d', b=cond_txt.shape[0])
-        #             cond_txt = torch.cat((cond_txt, prompt), dim=1) # add the prompt token
-
-        #         if cond['c_concat'] is None:
-        #             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=None, only_mid_control=self.only_mid_control)
-        #         else:
-        #             control = self.control_model(x=x_noisy, hint=torch.cat(cond['c_concat'], 1), timesteps=t, context=cond_txt)
-        #             control = [c * scale for c, scale in zip(control, self.control_scales)]
-        #             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=control, only_mid_control=self.only_mid_control)
-
-        # else:
-        #     if cond['art'].cpu().numpy()[0] == 1.0:
-        #         # print('bonheur')
-
-        #         if self.num_prompt_tokens > 0:
-        #             prompt = repeat(self.prompt_token1*1.0, 'n d -> b n d', b=cond_txt.shape[0])
-        #             cond_txt = torch.cat((cond_txt, prompt), dim=1) # add the prompt token
-
-        #         if cond['c_concat'] is None:
-        #             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=None, only_mid_control=self.only_mid_control)
-        #         else:
-        #             control = self.control_model(x=x_noisy, hint=torch.cat(cond['c_concat'], 1), timesteps=t, context=cond_txt)
-        #             control = [c * scale for c, scale in zip(control, self.control_scales)]
-        #             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=control, only_mid_control=self.only_mid_control)
-
-        #     elif cond['art'].cpu().numpy()[0] == 2.0:
-        #         # print('boudin')
-
-        #         if self.num_prompt_tokens > 0:
-        #             prompt = repeat(self.prompt_token2*1.0, 'n d -> b n d', b=cond_txt.shape[0])
-        #             cond_txt = torch.cat((cond_txt, prompt), dim=1) # add the prompt token
-
-        #         if cond['c_concat'] is None:
-        #             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=None, only_mid_control=self.only_mid_control)
-        #         else:
-        #             control = self.control_model(x=x_noisy, hint=torch.cat(cond['c_concat'], 1), timesteps=t, context=cond_txt)
-        #             control = [c * scale for c, scale in zip(control, self.control_scales)]
-        #             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=control, only_mid_control=self.only_mid_control)
-
-        #     elif cond['art'].cpu().numpy()[0] == 3.0:
-        #         # print('constable')
-
-        #         if self.num_prompt_tokens > 0:
-        #             prompt = repeat(self.prompt_token3*1.0, 'n d -> b n d', b=cond_txt.shape[0])
-        #             cond_txt = torch.cat((cond_txt, prompt), dim=1) # add the prompt token
-
-        #         if cond['c_concat'] is None:
-        #             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=None, only_mid_control=self.only_mid_control)
-        #         else:
-        #             control = self.control_model(x=x_noisy, hint=torch.cat(cond['c_concat'], 1), timesteps=t, context=cond_txt)
-        #             control = [c * scale for c, scale in zip(control, self.control_scales)]
-        #             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=control, only_mid_control=self.only_mid_control)
-
-        #     elif cond['art'].cpu().numpy()[0] == 4.0:
-        #         # print('courbet')
-                
-        #         if self.num_prompt_tokens > 0:
-        #             prompt = repeat(self.prompt_token4*1.0, 'n d -> b n d', b=cond_txt.shape[0])
-        #             cond_txt = torch.cat((cond_txt, prompt), dim=1) # add the prompt token
-
-        #         if cond['c_concat'] is None:
-        #             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=None, only_mid_control=self.only_mid_control)
-        #         else:
-        #             control = self.control_model(x=x_noisy, hint=torch.cat(cond['c_concat'], 1), timesteps=t, context=cond_txt)
-        #             control = [c * scale for c, scale in zip(control, self.control_scales)]
-        #             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=control, only_mid_control=self.only_mid_control)
-
-        #     elif cond['art'].cpu().numpy()[0] == 5.0:
-        #         # print('jones')
-                
-        #         if self.num_prompt_tokens > 0:
-        #             prompt = repeat(self.prompt_token5*1.0, 'n d -> b n d', b=cond_txt.shape[0])
-        #             cond_txt = torch.cat((cond_txt, prompt), dim=1) # add the prompt token
-
-        #         if cond['c_concat'] is None:
-        #             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=None, only_mid_control=self.only_mid_control)
-        #         else:
-        #             control = self.control_model(x=x_noisy, hint=torch.cat(cond['c_concat'], 1), timesteps=t, context=cond_txt)
-        #             control = [c * scale for c, scale in zip(control, self.control_scales)]
-        #             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=control, only_mid_control=self.only_mid_control)
-
-        #     elif cond['art'].cpu().numpy()[0] == 6.0:
-        #         # print('manet')
-                
-        #         if self.num_prompt_tokens > 0:
-        #             prompt = repeat(self.prompt_token6*1.0, 'n d -> b n d', b=cond_txt.shape[0])
-        #             cond_txt = torch.cat((cond_txt, prompt), dim=1) # add the prompt token
-
-        #         if cond['c_concat'] is None:
-        #             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=None, only_mid_control=self.only_mid_control)
-        #         else:
-        #             control = self.control_model(x=x_noisy, hint=torch.cat(cond['c_concat'], 1), timesteps=t, context=cond_txt)
-        #             control = [c * scale for c, scale in zip(control, self.control_scales)]
-        #             eps = diffusion_model(x=x_noisy, timesteps=t, context=cond_txt, control=control, only_mid_control=self.only_mid_control)
-
-
-
-
-
-
-
-
-
-
-
-
-
     
         return eps
 
@@ -586,13 +381,9 @@ class ControlLDM(LatentDiffusion):
                    **kwargs):
         use_ddim = ddim_steps is not None
 
-        # print(self.prompt_token1)
-        # print(self.prompt_token2)
-
-
         log = dict()
         z, c = self.get_input(batch, self.first_stage_key, bs=N)
-        c_cat, c, a = c["c_concat"][0][:N], c["c_crossattn"][0][:N], c["art"]
+        c_cat, c, a = c["c_concat"][0][:N], c["c_crossattn"][0][:N], c["art"][:N]
         N = min(z.shape[0], N)
         n_row = min(z.shape[0], n_row)
         log["reconstruction"] = self.decode_first_stage(z)
@@ -619,7 +410,7 @@ class ControlLDM(LatentDiffusion):
 
         if sample:
             # get denoise row
-            samples, z_denoise_row = self.sample_log(cond={"c_concat": [c_cat], "c_crossattn": [c], "art": [a]},
+            samples, z_denoise_row = self.sample_log(cond={"c_concat": [c_cat], "c_crossattn": [c], "art": a},
                                                      batch_size=N, ddim=use_ddim,
                                                      ddim_steps=ddim_steps, eta=ddim_eta)
             x_samples = self.decode_first_stage(samples)
@@ -631,8 +422,8 @@ class ControlLDM(LatentDiffusion):
         if unconditional_guidance_scale > 1.0:
             uc_cross = self.get_unconditional_conditioning(N)
             uc_cat = c_cat  # torch.zeros_like(c_cat)
-            uc_full = {"c_concat": [uc_cat], "c_crossattn": [uc_cross], "art": [a]}
-            samples_cfg, _ = self.sample_log(cond={"c_concat": [c_cat], "c_crossattn": [c], "art": [a]},
+            uc_full = {"c_concat": [uc_cat], "c_crossattn": [uc_cross], "art": a}
+            samples_cfg, _ = self.sample_log(cond={"c_concat": [c_cat], "c_crossattn": [c], "art": a},
                                              batch_size=N, ddim=use_ddim,
                                              ddim_steps=ddim_steps, eta=ddim_eta,
                                              unconditional_guidance_scale=unconditional_guidance_scale,
@@ -662,22 +453,11 @@ class ControlLDM(LatentDiffusion):
 
     def configure_optimizers(self):
         lr = self.learning_rate
-
-        tok1 = "prompt_token1"
-        # tok2 = "prompt_token2"
-        # tok3 = "prompt_token3"
-        # tok4 = "prompt_token4"
-        # tok5 = "prompt_token5"
-        # tok6 = "prompt_token6"
-
-        params = []
-
+        tok = "prompt_tokens"
+        params = list(self.control_model.parameters())
         for name, param in self.named_parameters():
-            # if name == tok1 or name == tok2 or name == tok3 or name == tok4 or name == tok5 or name == tok6:
-            if name == tok1:
-                params.append(param) 
-
-        print(params)                           
+            if name == tok:
+                params.append(param)                      
 
         opt = torch.optim.AdamW(params, lr=lr)
 

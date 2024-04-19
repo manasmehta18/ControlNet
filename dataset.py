@@ -27,6 +27,8 @@ class MyDataset(Dataset):
         target_filename = item['target']
         prompt = item['prompt']
 
+        prompt = prompt.split(' by the artist ')[0]
+
         #joint model
         artist = item['art']
 

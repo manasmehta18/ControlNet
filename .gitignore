@@ -9,6 +9,7 @@ annotations/
 tokens/
 maps_whole/
 paintings_whole/
+logs/
 
 *.pth
 *.pt
